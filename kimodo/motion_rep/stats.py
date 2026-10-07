@@ -4,7 +4,6 @@
 
 import logging
 import os
-from typing import Optional
 
 import numpy as np
 import torch
@@ -21,7 +20,7 @@ class Stats(torch.nn.Module):
 
     def __init__(
         self,
-        folder: Optional[str] = None,
+        folder: str | None = None,
         load: bool = True,
         eps=1e-05,
     ):
@@ -61,20 +60,45 @@ class Stats(torch.nn.Module):
         """Register mean/std tensors as non-persistent buffers."""
         self.register_buffer("mean", mean, persistent=False)
         self.register_buffer("std", std, persistent=False)
+        # eps-adjusted std, precomputed once (normalize/unnormalize run many times per step)
+        self.register_buffer("std_eps", torch.sqrt(std**2 + self.eps), persistent=False)
+        self._cast_cache = {}
+
+    def _stats_for(self, device: torch.device, dtype: torch.dtype):
+        """(mean, std_eps) cast to the requested device/dtype, cached per combination.
+
+        Under autocast the data dtype differs from the fp32 buffers, so `.to()` allocated fresh
+        casts on every call; the cache makes the hot path a dict lookup.
+        """
+        if torch.compiler.is_compiling():
+            # inside torch.compile the casts fuse into the graph (inductor CSEs them), and the
+            # cache mutation would be replayed with graph-output tensors: under
+            # mode="reduce-overhead" those live in the cudagraph memory pool, so eager callers
+            # reading the cache later hit "accessing tensor output of CUDAGraphs that has been
+            # overwritten by a subsequent run"
+            return (
+                self.mean.to(device=device, dtype=dtype),
+                self.std_eps.to(device=device, dtype=dtype),
+            )
+        key = (device, dtype)
+        cached = self._cast_cache.get(key)
+        if cached is None:
+            cached = (
+                self.mean.to(device=device, dtype=dtype),
+                self.std_eps.to(device=device, dtype=dtype),
+            )
+            self._cast_cache[key] = cached
+        return cached
 
     def normalize(self, data: torch.Tensor) -> torch.Tensor:
         """Normalize data using the stored statistics."""
-        mean = self.mean.to(device=data.device, dtype=data.dtype)
-        std = self.std.to(device=data.device, dtype=data.dtype)
-        # adjust std with eps
-        return (data - mean) / torch.sqrt(std**2 + self.eps)
+        mean, std_eps = self._stats_for(data.device, data.dtype)
+        return (data - mean) / std_eps
 
     def unnormalize(self, data: torch.Tensor) -> torch.Tensor:
         """Undo normalization using the stored statistics."""
-        mean = self.mean.to(device=data.device, dtype=data.dtype)
-        std = self.std.to(device=data.device, dtype=data.dtype)
-        # adjust std with eps
-        return data * torch.sqrt(std**2 + self.eps) + mean
+        mean, std_eps = self._stats_for(data.device, data.dtype)
+        return data * std_eps + mean
 
     def is_loaded(self):
         """Return whether statistics are currently available."""
@@ -86,9 +110,9 @@ class Stats(torch.nn.Module):
 
     def save(
         self,
-        folder: Optional[str] = None,
-        mean: Optional[torch.Tensor] = None,
-        std: Optional[torch.Tensor] = None,
+        folder: str | None = None,
+        mean: torch.Tensor | None = None,
+        std: torch.Tensor | None = None,
     ):
         """Save statistics to ``folder`` as ``mean.npy`` and ``std.npy``."""
         if folder is None:

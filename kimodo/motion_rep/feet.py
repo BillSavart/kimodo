@@ -28,7 +28,6 @@ def foot_detect_from_pos_and_vel(
         (heel/toe order follows the skeleton joint index definition), where
         ``1`` denotes contact.
     """
-
     device = positions.device
     # Use at most 2 foot joints per side (ankle + toe); SOMA77 defines a
     # third end-effector (ToeEnd) that SOMA30 and other skeletons omit.

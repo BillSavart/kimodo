@@ -2,8 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 """Motion representation helpers: velocity, heading, masks, and rotation of features."""
 
-from typing import List, Optional, Union
-
 import einops
 import torch
 
@@ -22,7 +20,6 @@ def diff_angles(angles: torch.Tensor, fps: float) -> torch.Tensor:
     Returns:
         [..., T-1] difference between consecutive angles (rad/s).
     """
-
     cos = torch.cos(angles)
     sin = torch.sin(angles)
 
@@ -39,17 +36,18 @@ def diff_angles(angles: torch.Tensor, fps: float) -> torch.Tensor:
 def compute_vel_xyz(
     positions: torch.Tensor,
     fps: float,
-    lengths: Optional[torch.Tensor] = None,
+    lengths: torch.Tensor | None = None,
 ) -> torch.Tensor:
-    """Compute the velocities from positions: dx/dt. Works with batches. The last velocity is duplicated to keep the same size.
+    """Compute the velocities from positions: dx/dt.
 
-    Args:
-        positions (torch.Tensor): [..., T, J, 3] xyz positions of a human skeleton
-        fps (float): frame per seconds
-        lengths (Optional[torch.Tensor]): [...] size of each input batched. If not provided, positions should not be batched
+    Works with batches. The last velocity is duplicated to keep the same size.
+        Args:
+            positions (torch.Tensor): [..., T, J, 3] xyz positions of a human skeleton
+            fps (float): frame per seconds
+            lengths (Optional[torch.Tensor]): [...] size of each input batched. If not provided, positions should not be batched
 
-    Returns:
-        velocity (torch.Tensor): [..., T, J, 3] velocities computed from the positions
+        Returns:
+            velocity (torch.Tensor): [..., T, J, 3] velocities computed from the positions
     """
     device = positions.device
 
@@ -57,18 +55,19 @@ def compute_vel_xyz(
         assert positions.shape[0] == 1, "If lengths is not provided, the input should not be batched."
         lengths = torch.tensor([len(positions)], device=device)
 
-    # useful for indexing
-    range_len = torch.arange(len(lengths))
-
     # compute velocities with fps
     velocity = fps * (positions[:, 1:] - positions[:, :-1])
     # pading the velocity vector
     vel_pad = torch.zeros_like(velocity[:, 0])
     velocity, _ = einops.pack([velocity, vel_pad], "batch * nbjoints dim")
 
-    # repeat the last velocities
-    # with special care for different lengths with batches
-    velocity[(range_len, lengths - 1)] = velocity[(range_len, lengths - 2)]
+    # repeat the previous velocity at the last valid frame of each sequence. Static-shape
+    # formulation: an index_put driven by `lengths` is data-dependent and hostile to
+    # torch.compile (this runs inside the compiled denoiser via global_root_to_local_root).
+    time_idx = torch.arange(velocity.shape[1], device=device)
+    is_last_valid = time_idx[None, :] == (lengths - 1)[:, None]  # [B, T]
+    velocity_prev = torch.cat([torch.zeros_like(velocity[:, :1]), velocity[:, :-1]], dim=1)
+    velocity = torch.where(is_last_valid[:, :, None, None], velocity_prev, velocity)
     return velocity
 
 
@@ -76,7 +75,7 @@ def compute_vel_xyz(
 def compute_vel_angle(
     root_rot_angles: torch.Tensor,
     fps: float,
-    lengths: Optional[torch.Tensor] = None,
+    lengths: torch.Tensor | None = None,
 ) -> torch.Tensor:
     """Compute the local root rotation velocity: dtheta/dt.
 
@@ -93,18 +92,18 @@ def compute_vel_angle(
         assert root_rot_angles.shape[0] == 1, "If lengths is not provided, the input should not be batched."
         lengths = torch.tensor([len(root_rot_angles)], device=device)
 
-    # useful for indexing
-    range_len = torch.arange(len(lengths))
-
     local_root_rot_vel = diff_angles(root_rot_angles, fps)
     pad_rot_vel_angles = torch.zeros_like(root_rot_angles[:, 0])
     local_root_rot_vel, _ = einops.pack(
         [local_root_rot_vel, pad_rot_vel_angles],
         "batch *",
     )
-    # repeat the last rotation angle
-    # with special care for different lengths with batches
-    local_root_rot_vel[(range_len, lengths - 1)] = local_root_rot_vel[(range_len, lengths - 2)]
+    # repeat the previous value at the last valid frame (static-shape formulation, see
+    # compute_vel_xyz)
+    time_idx = torch.arange(local_root_rot_vel.shape[1], device=device)
+    is_last_valid = time_idx[None, :] == (lengths - 1)[:, None]  # [B, T]
+    vel_prev = torch.cat([torch.zeros_like(local_root_rot_vel[:, :1]), local_root_rot_vel[:, :-1]], dim=1)
+    local_root_rot_vel = torch.where(is_last_valid, vel_prev, local_root_rot_vel)
     return local_root_rot_vel
 
 
@@ -127,8 +126,8 @@ def compute_heading_angle(posed_joints: torch.Tensor, skeleton: SkeletonBase) ->
 
 
 def length_to_mask(
-    length: Union[torch.Tensor, List],
-    max_len: Optional[int] = None,
+    length: torch.Tensor | list,
+    max_len: int | None = None,
     device=None,
 ) -> torch.Tensor:
     """Convert sequence lengths to a boolean validity mask.
@@ -185,13 +184,26 @@ class RotateFeatures:
         )
         self.corrective_mat_Y_T = self.corrective_mat_Y.transpose(-2, -1).contiguous()
 
+    @staticmethod
+    def _align_mat(mat: torch.Tensor, tensor: torch.Tensor) -> torch.Tensor:
+        """Insert singleton dims so the per-angle matrices broadcast against ``tensor``.
+
+        ``mat`` has the angle's batch shape plus the trailing matrix dims; ``tensor`` is
+        ``[*angle_shape, ..., C]``. A per-sample angle ``[B]`` applied to ``[B, T, J, 3]``
+        needs ``[B, 1, 3, 3]`` (plain ``@`` would misalign ``T`` with ``B``); a per-frame
+        angle ``[B, T]`` on the same tensor already aligns and is left unchanged.
+        """
+        pad = tensor.dim() - mat.dim()
+        assert pad >= 0, f"angle batch shape {mat.shape[:-2]} has more dims than positions {tensor.shape}"
+        return mat.reshape(mat.shape[:-2] + (1,) * pad + mat.shape[-2:])
+
     def rotate_positions(self, positions: torch.Tensor):
         """Rotate 3D positions around the Y axis."""
-        return positions @ self.corrective_mat_Y_T
+        return positions @ self._align_mat(self.corrective_mat_Y_T, positions)
 
     def rotate_2d_positions(self, positions_2d: torch.Tensor):
         """Rotate 2D ``(x, z)`` vectors in the ground plane."""
-        return positions_2d @ self.corrective_mat_2d_T
+        return positions_2d @ self._align_mat(self.corrective_mat_2d_T, positions_2d)
 
     def rotate_rotations(self, rotations: torch.Tensor):
         """Left-multiply global rotation matrices by the heading correction."""

@@ -2,8 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 """TMR motion representation: global root, global joints, velocities, and foot contacts."""
 
-from typing import Optional
-
 import einops
 import torch
 
@@ -16,6 +14,7 @@ from .base import MotionRepBase
 
 class TMRMotionRep(MotionRepBase):
     """Motion representation with global root and local joint positions.
+
     The local joint positions are rotation invariant (they all face z+)
 
     Feature layout:
@@ -30,8 +29,12 @@ class TMRMotionRep(MotionRepBase):
         self,
         skeleton,
         fps,
-        stats_path: Optional[str] = None,
+        stats_path: str | None = None,
+        name: str | None = None,
     ):
+        # `name` keys the on-disk feature/stats folder when built from a training config
+        # (Hydra passes every node key); converted eval checkpoints omit it.
+        self.name = name
         nbjoints = skeleton.nbjoints
 
         self.size_dict = {
@@ -52,13 +55,13 @@ class TMRMotionRep(MotionRepBase):
     @ensure_batched(local_joint_rots=5, root_positions=3, posed_joints=4, lengths=1)
     def __call__(
         self,
-        local_joint_rots: Optional[torch.Tensor] = None,
-        root_positions: Optional[torch.Tensor] = None,
-        posed_joints: Optional[torch.Tensor] = None,
+        local_joint_rots: torch.Tensor | None = None,
+        root_positions: torch.Tensor | None = None,
+        posed_joints: torch.Tensor | None = None,
         *,
         to_normalize: bool,
         to_canonicalize: bool = False,
-        lengths: Optional[torch.Tensor] = None,
+        lengths: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Convert motion inputs to this feature representation.
 
@@ -178,8 +181,8 @@ class TMRMotionRep(MotionRepBase):
 
         new_features = features.clone()
         new_root_pos = new_features[:, :, self.slice_dict["root_pos"]]
-        new_root_pos[:, :, 0] += translation_2d[:, 0]
-        new_root_pos[:, :, 2] += translation_2d[:, 1]
+        new_root_pos[:, :, 0] += translation_2d[:, [0]]
+        new_root_pos[:, :, 2] += translation_2d[:, [1]]
         return new_features
 
     @ensure_batched(features=3)
@@ -214,7 +217,7 @@ class TMRMotionRep(MotionRepBase):
         ] = einops.unpack(features, self.ps, "batch time *")
 
         dummy_root = 0 * local_joints_positions[:, :, [0]]
-        posed_joints_from_pos = torch.stack([dummy_root, local_joints_positions], axis=2)
+        posed_joints_from_pos = torch.cat([dummy_root, local_joints_positions], dim=2)
         posed_joints_from_pos[..., 0] += root_positions[..., None, 0]
         posed_joints_from_pos[..., 2] += root_positions[..., None, 2]
         root_positions = posed_joints_from_pos[..., self.skeleton.root_idx, :]

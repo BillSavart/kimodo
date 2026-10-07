@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""Smooth root trajectory: ADMM-based smoother with margin constraints and get_smooth_root_pos helper."""
+"""Smooth root trajectory: ADMM-based smoother with margin constraints and get_smooth_root_pos
+helper."""
 
 import math
 
@@ -111,7 +112,6 @@ class TrajectorySmoother:
 
     def x_update(self, x, z, u, x_t):
         """Update x in the ADMM iteration."""
-
         # x = (wp * I + A^T A + p I)^-1 (wp * x_orig + p (z - u))
         r = self.pos_weight * x_t + self.admm_stepsize * (z - u)
         x[:] = self.system_lu.solve(r)

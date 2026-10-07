@@ -91,7 +91,7 @@ def compute_idx_levels(parents):
             idx_levs.append([])
         idx_levs[lev].append(int(i))
         lev_dicts[int(i)] = lev
-    idx_levs = [torch.tensor(x).long() for x in idx_levs]
+    idx_levs = [torch.tensor(x, device=parents.device).long() for x in idx_levs]
     return idx_levs
 
 
@@ -182,3 +182,88 @@ def forward_kinematics(
     global_rot_mat = transforms[:, :, :3, :3]
 
     return posed_joints, global_rot_mat
+
+
+def skeleton_idx_levs(skeleton, device):
+    """Return the skeleton's cached FK joint levels on ``device``, or None if absent.
+
+    The levels are buffers, so they normally already sit on ``device`` (moved with the module);
+    the ``.to`` below is a fallback for skeletons used on a foreign device and would compile
+    device_put copies into the FK graph — keep the skeleton on the compute device instead.
+    """
+    idx_levs = getattr(skeleton, "idx_levs", None)
+    if idx_levs is None:
+        return None
+    return [t if t.device == device else t.to(device) for t in idx_levs]
+
+
+def joints_from_global_rots(
+    global_joint_rots: torch.Tensor,
+    root_positions: torch.Tensor,
+    skeleton,
+    root_positions_is_global: bool = True,
+    return_norootpos: bool = False,
+):
+    """Joint positions directly from GLOBAL rotations: ``p_j = p_parent + R_g[parent] @ rel_j``.
+
+    ``fk`` composes global rotations from local ones level by level; when the caller already has
+    the global rotations (decoded from the features) and does not need local rotations, this skips
+    the global->local conversion and all the rotation compositions.
+
+    Args:
+        global_joint_rots: Global rotation matrices with shape ``(..., J, 3, 3)``.
+        root_positions: Root translations with shape ``(..., 3)``.
+        skeleton: Skeleton exposing ``neutral_joints``, ``joint_parents``, ``root_idx``.
+        root_positions_is_global: see ``fk``.
+        return_norootpos: also return the root-local positions (root at the origin, no dependence
+            on ``root_positions``) that the posed joints are built from — the FK position loss
+            wants exactly these, so it can consume them directly instead of re-subtracting the
+            root (which would also route gradients through ``root_positions`` for nothing).
+
+    Returns:
+        Posed joints ``(..., J, 3)`` (identical to ``fk``'s ``posed_joints``); if
+        ``return_norootpos`` also the root-local positions ``(..., J, 3)``.
+    """
+    device = global_joint_rots.device
+    dtype = global_joint_rots.dtype
+
+    # root is joint 0 (enforced in SkeletonBase)
+    neutral_joints = skeleton.neutral_joints.to(device=device, dtype=dtype)
+    if root_positions_is_global:
+        neutral_joints = neutral_joints - neutral_joints[0]
+
+    parents = skeleton.joint_parents
+    if parents.device != device:
+        parents = parents.to(device)
+    idx_levs = skeleton_idx_levs(skeleton, device)
+    if idx_levs is None:
+        idx_levs = compute_idx_levels(parents)
+
+    # match batch_rigid_transform's TF32 policy so both position paths agree bit-for-bit
+    if global_joint_rots.is_cuda:
+        allow_tf32 = torch.backends.cuda.matmul.allow_tf32
+        torch.backends.cuda.matmul.allow_tf32 = False
+    try:
+        # bone offset of each joint from its parent; the root keeps its own neutral position
+        rel_joints = neutral_joints - neutral_joints[parents.clamp(min=0)]
+        rel_joints[0] = neutral_joints[0]
+
+        positions = global_joint_rots.new_zeros((*global_joint_rots.shape[:-3], neutral_joints.shape[0], 3))
+        positions[..., 0, :] = rel_joints[0]
+        for indices in idx_levs:
+            par_idx = torch.index_select(parents, 0, indices)
+            parent_rot = torch.index_select(global_joint_rots, -3, par_idx)  # (..., L, 3, 3)
+            offset = rel_joints.index_select(0, indices)  # (L, 3)
+            step = torch.matmul(parent_rot, offset[..., None]).squeeze(-1)  # (..., L, 3)
+            new_pos = torch.index_select(positions, -2, par_idx) + step
+            positions = positions.index_copy(-2, indices, new_pos)
+    finally:
+        if global_joint_rots.is_cuda:
+            torch.backends.cuda.matmul.allow_tf32 = allow_tf32
+
+    # ``positions`` has the root at the origin (its own neutral position is 0 after recentering),
+    # so it is exactly the root-local pose; adding the root translation gives the world pose.
+    posed_joints = positions + root_positions[..., None, :]
+    if return_norootpos:
+        return posed_joints, positions
+    return posed_joints

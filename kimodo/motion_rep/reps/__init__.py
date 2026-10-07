@@ -2,12 +2,15 @@
 # SPDX-License-Identifier: Apache-2.0
 """Motion representation implementations: base, Kimodo, and TMR."""
 
-from .base import MotionRepBase
+from .ardy_motionrep import ArdyMotionRep
+from .base import FeatureLayout, MotionRepBase
 from .kimodo_motionrep import KimodoMotionRep
 from .tmr_motionrep import TMRMotionRep
 
 __all__ = [
+    "FeatureLayout",
     "MotionRepBase",
     "KimodoMotionRep",
+    "ArdyMotionRep",
     "TMRMotionRep",
 ]
