@@ -15,6 +15,8 @@ from typing import Optional
 KIMODO_REPO_IDS = [
     "nvidia/Kimodo-SOMA-RP-v1",
     "nvidia/Kimodo-SOMA-RP-v1.1",
+    "nvidia/Kimodo-SOMA-RP-v1.2",
+    "nvidia/Kimodo-SOMA-RP-ArdyRep-v1.2",
     "nvidia/Kimodo-SMPLX-RP-v1",
     "nvidia/Kimodo-G1-RP-v1",
     "nvidia/Kimodo-SOMA-SEED-v1",
@@ -25,8 +27,10 @@ TMR_REPO_IDS = [
     "nvidia/TMR-SOMA-RP-v1",
 ]
 
-# Repo ID without org, for display (e.g. Kimodo-SOMA-RP-v1).
-_REPO_NAME_PATTERN = re.compile(r"^(Kimodo|TMR)-([A-Za-z0-9]+)-(RP|SEED)-v(\d+(?:\.\d+)*)$")
+# Repo ID without org, for display (e.g. Kimodo-SOMA-RP-v1). An optional variant tag between
+# the dataset and the version marks a model with a different motion representation
+# (e.g. Kimodo-SOMA-RP-ArdyRep-v1.2 predicts the Ardy global-root representation).
+_REPO_NAME_PATTERN = re.compile(r"^(Kimodo|TMR)-([A-Za-z0-9]+)-(RP|SEED)(?:-([A-Za-z][A-Za-z0-9]*))?-v(\d+(?:\.\d+)*)$")
 
 
 @dataclass
@@ -59,18 +63,24 @@ def _parse_repo_id(repo_id: str) -> Optional[ModelInfo]:
     m = _REPO_NAME_PATTERN.match(name)
     if not m:
         return None
-    family, skeleton, dataset, ver = m.groups()
+    family, skeleton, dataset, variant, ver = m.groups()
     # Normalize skeleton for display (as is for now)
     skeleton_display = skeleton
-    # Include family so Kimodo-SOMA-RP and TMR-SOMA-RP have distinct keys.
+    # Include family so Kimodo-SOMA-RP and TMR-SOMA-RP have distinct keys; variant models
+    # (different motion representation) get their own key and a version label carrying the
+    # tag so (dataset, skeleton, version) stays unique for the demo dropdowns.
     short_key = f"{family.lower()}-{skeleton.lower()}-{dataset.lower()}"
+    version = f"v{ver}"
+    if variant:
+        short_key = f"{short_key}-{variant.lower()}"
+        version = f"{variant}-v{ver}"
     return ModelInfo(
         repo_id=repo_id,
         short_key=short_key,
         family=family,
         skeleton=skeleton_display,
         dataset=dataset,
-        version=f"v{ver}",
+        version=version,
         display_name=name,
     )
 
