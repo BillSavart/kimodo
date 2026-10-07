@@ -43,6 +43,13 @@ Options:
 
 - `--dataset`: path to the local SEED dataset folder (default: `datasets/bones-seed/soma_uniform`).
 - `--workers`: number of parallel workers to use for benchmark construction (default: 1, sequential)
+- `--motion_rep`: motion representation to rehydrate the ground truth and constraints with:
+  `kimodo` (default, smooth-root — the released benchmark) or `ardy` (raw-hips root, for models
+  predicting the Ardy motion representation such as Kimodo-SOMA-RP-ArdyRep-v1.2 or the ARDY models).
+  The seeds are representation-agnostic; the representation only enters at this rehydration step.
+- `--skeleton`: `soma77` (default) or `soma30`.
+- `--output`: write the built suite to a separate folder instead of in place (recommended when
+  building both representations from the same metadata).
 - `--overwrite`: rebuild `gt_motion.npz` even if it already exists.
 
 For each test case, the script:
