@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Dict, List
 
 import torch
 
@@ -44,7 +43,7 @@ class Metric:
         return output
 
 
-def compute_metrics(metrics_list: List[Metric], metrics_in: Dict) -> Dict:
+def compute_metrics(metrics_list: list[Metric], metrics_in: dict) -> dict:
     """Run each metric on metrics_in and return the combined dict of batch results."""
     metrics_out = {}
     for metric in metrics_list:
@@ -52,7 +51,7 @@ def compute_metrics(metrics_list: List[Metric], metrics_in: Dict) -> Dict:
     return metrics_out
 
 
-def aggregate_metrics(metrics_list: List[Metric]) -> Dict:
+def aggregate_metrics(metrics_list: list[Metric]) -> dict:
     """Return combined aggregated results (concatenated over batches) for all metrics."""
     metrics_out = {}
     for metric in metrics_list:
@@ -60,7 +59,7 @@ def aggregate_metrics(metrics_list: List[Metric]) -> Dict:
     return metrics_out
 
 
-def clear_metrics(metrics_list: List[Metric]) -> None:
+def clear_metrics(metrics_list: list[Metric]) -> None:
     """Clear accumulated values for all metrics in the list."""
     for metric in metrics_list:
         metric.clear()

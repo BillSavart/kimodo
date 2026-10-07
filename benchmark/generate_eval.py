@@ -1,8 +1,7 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-"""
-Step (2) of evaluation pipeline.
+"""Step (2) of evaluation pipeline.
 
 This script recursively generates motions using Kimodo from a test suite folder tree.
 """
@@ -17,10 +16,38 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 from tqdm.auto import tqdm
 
+from omegaconf import OmegaConf
+
+from kimodo.model import DEFAULT_MODEL, load_model
 from kimodo.constraints import load_constraints_lst
 from kimodo.meta import parse_prompts_from_meta
-from kimodo.model import DEFAULT_MODEL, load_model
+from kimodo.model.load_model import (
+    DEFAULT_TEXT_ENCODER_URL,
+    _select_text_encoder_conf,
+    get_env_var,
+)
+from kimodo.model.loading import instantiate_from_dict
 from kimodo.tools import load_json, seed_everything
+
+
+def _load_model_from_folder(model_path, device=None, text_encoder_fp32: bool = False):
+    """Load a checkpoint folder directly (not a registered model name).
+
+    Mirrors ``kimodo.model.load_model``'s CHECKPOINT_DIR flow for an explicit path.
+    """
+    model_path = Path(model_path)
+    model_conf = OmegaConf.load(model_path / "config.yaml")
+    text_encoder_url = get_env_var("TEXT_ENCODER_URL", DEFAULT_TEXT_ENCODER_URL)
+    runtime_conf = OmegaConf.create(
+        {
+            "checkpoint_dir": str(model_path),
+            "text_encoder": _select_text_encoder_conf(text_encoder_url, text_encoder_fp32),
+        }
+    )
+    model_cfg = OmegaConf.to_container(OmegaConf.merge(model_conf, runtime_conf), resolve=True)
+    model_cfg.pop("checkpoint_dir", None)
+    model = instantiate_from_dict(model_cfg, overrides={"device": device})
+    return model.eval()
 
 
 def parse_args():
@@ -53,7 +80,7 @@ def parse_args():
         "--model",
         type=str,
         default=DEFAULT_MODEL,
-        help="Name of the model (e.g. Kimodo-SOMA-RP-v1.1, kimodo-soma-rp, or SOMA).",
+        help="Kimodo model: short key (e.g. kimodo-soma-rp), full/partial name, or a full path to a checkpoint folder.",
     )
     parser.add_argument(
         "--diffusion_steps",
@@ -106,6 +133,7 @@ def copy_source_files(src_dir: Path, out_dir: Path) -> None:
 
 class EvalExampleDataset(Dataset):
     """Dataset of example folders: yields text, num_frame, constraints_path (and paths, meta).
+
     No torch/skeleton in workers so num_workers > 0 is safe with CUDA.
     """
 
@@ -219,13 +247,19 @@ def main():
         raise SystemExit(f"No folders with meta.json found under {testsuite_root}")
     print(f"Discovered {len(examples)} example folders.")
 
-    model, resolved_name = load_model(
-        args.model,
-        device=device,
-        default_family="Kimodo",
-        return_resolved_name=True,
-        text_encoder_fp32=args.text_encoder_fp32,
-    )
+    if Path(args.model).is_dir():
+        # A path to a checkpoint folder (not a registered short key/display name): load it
+        # directly, bypassing the model registry (mirrors generate_eval_ardy.py).
+        model = _load_model_from_folder(args.model, device=device, text_encoder_fp32=args.text_encoder_fp32)
+        resolved_name = Path(args.model).resolve().name
+    else:
+        model, resolved_name = load_model(
+            args.model,
+            device=device,
+            default_family="Kimodo",
+            return_resolved_name=True,
+            text_encoder_fp32=args.text_encoder_fp32,
+        )
     # v1.1 models are meant to be used for benchmark evaluation
     _deprecated_for_benchmark = {
         "kimodo-soma-rp-v1": "Kimodo-SOMA-RP-v1 was not trained to be compatible with the benchmark evaluation.",

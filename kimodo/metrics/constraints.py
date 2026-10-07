@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Dict, List, Optional
 
 import torch
 from torch import Tensor
@@ -20,7 +19,7 @@ from kimodo.tools import ensure_batched
 from .base import Metric
 
 
-class ContraintFollow(Metric):
+class ConstraintFollow(Metric):
     """Constraint-following metric dispatcher for kimodo constraint sets."""
 
     def __init__(
@@ -37,10 +36,10 @@ class ContraintFollow(Metric):
     def _compute(
         self,
         posed_joints: Tensor,
-        constraints_lst: Optional[List],
-        lengths: Optional[Tensor] = None,
+        constraints_lst: list | None,
+        lengths: Tensor | None = None,
         **kwargs,
-    ) -> Dict:
+    ) -> dict:
         if not constraints_lst:
             return {}
 

@@ -86,14 +86,8 @@ def _accumulate_weighted(
             weight_acc[metric_name] = weight_acc.get(metric_name, 0.0) + weight
 
 
-def _to_averages(
-    weighted_sum: dict[str, float], weight: dict[str, float]
-) -> dict[str, float]:
-    return {
-        k: v / weight[k]
-        for k, v in sorted(weighted_sum.items())
-        if weight.get(k, 0.0) > 0
-    }
+def _to_averages(weighted_sum: dict[str, float], weight: dict[str, float]) -> dict[str, float]:
+    return {k: v / weight[k] for k, v in sorted(weighted_sum.items()) if weight.get(k, 0.0) > 0}
 
 
 def _load_result_row(
@@ -382,9 +376,8 @@ def _print_tf_formatted(
 ) -> None:
     """Print text-following table with Overview / Timeline single / Timeline multi groups.
 
-    *splits_data* is a list of ``(split_label, category_rows)`` tuples so
-    that content and repetition splits appear as separate row-pairs inside
-    one table.
+    *splits_data* is a list of ``(split_label, category_rows)`` tuples so that content and
+    repetition splits appear as separate row-pairs inside one table.
     """
     groups = ["Overview", "Timeline single", "Timeline multi"]
     specs: list[tuple[str, int, int]] = [
@@ -632,7 +625,12 @@ def _build_summary(root: Path) -> dict[str, Any]:
         combined_tmr_weight = defaultdict(float)
         for sum_key, weight_key, sum_acc, weight_acc in (
             ("per_motion_mean_weighted_sum", "per_motion_mean_weight", combined_per_motion, combined_per_motion_weight),
-            ("per_motion_mean_gt_weighted_sum", "per_motion_mean_gt_weight", combined_per_motion_gt, combined_per_motion_gt_weight),
+            (
+                "per_motion_mean_gt_weighted_sum",
+                "per_motion_mean_gt_weight",
+                combined_per_motion_gt,
+                combined_per_motion_gt_weight,
+            ),
             ("tmr_weighted_sum", "tmr_weight", combined_tmr, combined_tmr_weight),
         ):
             for src in (withtext, notext):

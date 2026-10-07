@@ -4,8 +4,6 @@
 
 from __future__ import annotations
 
-from typing import Dict, Optional
-
 import torch
 from torch import Tensor
 
@@ -29,12 +27,16 @@ def get_four_contacts(fidx: list):
 
 
 class FootSkateFromHeight(Metric):
-    """When toe joint is near the floor, measures mean velocity of the toes."""
+    """When toe joint is near the floor, measures mean velocity of the toes.
+
+    ``skeleton`` and ``fps`` may be omitted at construction (e.g. when wrapped in
+    ``kimodo.eval.metrics.JointsOutputMetric``, which injects them per call).
+    """
 
     def __init__(
         self,
-        skeleton: SkeletonBase,
-        fps: float,
+        skeleton: SkeletonBase | None = None,
+        fps: float | None = None,
         height_thresh: float = 0.05,
         **kwargs,
     ):
@@ -47,9 +49,9 @@ class FootSkateFromHeight(Metric):
     def _compute(
         self,
         posed_joints: Tensor,
-        lengths: Optional[Tensor] = None,
+        lengths: Tensor | None = None,
         **kwargs,
-    ) -> Dict:
+    ) -> dict:
         fidx = self.skeleton.foot_joint_idx
         fidx = get_four_contacts(fidx)
 
@@ -82,8 +84,8 @@ class FootSkateFromContacts(Metric):
 
     def __init__(
         self,
-        skeleton: SkeletonBase,
-        fps: float,
+        skeleton: SkeletonBase | None = None,
+        fps: float | None = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -94,10 +96,12 @@ class FootSkateFromContacts(Metric):
     def _compute(
         self,
         posed_joints: Tensor,
-        foot_contacts: Tensor,
-        lengths: Optional[Tensor] = None,
+        foot_contacts: Tensor | None = None,
+        lengths: Tensor | None = None,
         **kwargs,
-    ) -> Dict:
+    ) -> dict:
+        if foot_contacts is None:
+            return {}
         fidx = self.skeleton.foot_joint_idx
         fidx = get_four_contacts(fidx)
 
@@ -141,8 +145,8 @@ class FootSkateRatio(Metric):
 
     def __init__(
         self,
-        skeleton: SkeletonBase,
-        fps: float,
+        skeleton: SkeletonBase | None = None,
+        fps: float | None = None,
         height_thresh=0.05,
         vel_thresh=0.2,
         **kwargs,
@@ -154,14 +158,13 @@ class FootSkateRatio(Metric):
         self.skeleton = skeleton
         self.fps = fps
 
-    @ensure_batched(posed_joints=4, foot_contacts=3, lengths=1)
+    @ensure_batched(posed_joints=4, lengths=1)
     def _compute(
         self,
         posed_joints: Tensor,
-        foot_contacts: Tensor,
-        lengths: Optional[Tensor] = None,
+        lengths: Tensor | None = None,
         **kwargs,
-    ) -> Dict:
+    ) -> dict:
         fidx = self.skeleton.foot_joint_idx
         fidx = get_four_contacts(fidx)
 
@@ -202,8 +205,8 @@ class FootContactConsistency(Metric):
 
     def __init__(
         self,
-        skeleton: SkeletonBase,
-        fps: float,
+        skeleton: SkeletonBase | None = None,
+        fps: float | None = None,
         vel_thresh: float = 0.15,
         height_thresh: float = 0.10,
         **kwargs,
@@ -219,10 +222,12 @@ class FootContactConsistency(Metric):
     def _compute(
         self,
         posed_joints: Tensor,
-        foot_contacts: Tensor,
-        lengths: Optional[Tensor] = None,
+        foot_contacts: Tensor | None = None,
+        lengths: Tensor | None = None,
         **kwargs,
-    ) -> Dict:
+    ) -> dict:
+        if foot_contacts is None:
+            return {}
         velocity = compute_vel_xyz(posed_joints, float(self.fps), lengths=lengths)
         heuristic_contacts = foot_detect_from_pos_and_vel(
             posed_joints,

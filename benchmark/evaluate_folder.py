@@ -1,11 +1,10 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-"""
-Step (4) of evaluation pipeline.
+"""Step (4) of evaluation pipeline.
 
-This script recursively computes metrics for generated and ground-truth motions within a test suite folder tree. 
-Saves metrics json files per test case and per group of test cases in the folder tree.
+This script recursively computes metrics for generated and ground-truth motions within a test suite
+folder tree. Saves metrics json files per test case and per group of test cases in the folder tree.
 """
 
 import argparse
@@ -18,10 +17,10 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
-from kimodo.constraints import load_constraints_lst
 from kimodo.meta import parse_prompts_from_meta
+from kimodo.constraints import load_constraints_lst
 from kimodo.metrics import (
-    ContraintFollow,
+    ConstraintFollow,
     FootContactConsistency,
     FootSkateFromContacts,
     FootSkateFromHeight,
@@ -146,8 +145,10 @@ def _run_eval_on_group(
     dict[str, float],
     list[dict[str, Any]],
 ]:
-    """Run two passes: gen (motion.npz + embeddings) and GT (gt_motion.npz only). Return
-    per_sample_gen, per_sample_gt, aggregated_gen, aggregated_gt, tmr_metrics, tmr_per_sample.
+    """Run two passes: gen (motion.npz + embeddings) and GT (gt_motion.npz only).
+
+    Return per_sample_gen, per_sample_gt, aggregated_gen, aggregated_gt, tmr_metrics,
+    tmr_per_sample.
     """
     n = len(group)
     sample_ids: list[str] = []
@@ -300,7 +301,7 @@ def main():
         FootSkateFromContacts(**kwargs),
         FootContactConsistency(**kwargs),
         FootSkateRatio(**kwargs),
-        ContraintFollow(**kwargs),
+        ConstraintFollow(**kwargs),
         TMR_EmbeddingMetric(**kwargs),
     ]
 

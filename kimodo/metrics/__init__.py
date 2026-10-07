@@ -8,23 +8,23 @@ from .base import (
     clear_metrics,
     compute_metrics,
 )
-from .constraints import ContraintFollow
+from .constraints import ConstraintFollow
 from .foot_skate import (
     FootContactConsistency,
     FootSkateFromContacts,
     FootSkateFromHeight,
     FootSkateRatio,
 )
+from .retrieval import compute_tmr_retrieval_metrics
 from .tmr import (
     TMR_EmbeddingMetric,
     TMR_Metric,
     compute_tmr_per_sample_retrieval,
-    compute_tmr_retrieval_metrics,
 )
 
 __all__ = [
     "Metric",
-    "ContraintFollow",
+    "ConstraintFollow",
     "FootContactConsistency",
     "FootSkateFromContacts",
     "FootSkateFromHeight",
