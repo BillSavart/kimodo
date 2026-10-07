@@ -13,14 +13,13 @@ from typing import Any
 
 import numpy as np
 import torch
+from omegaconf import OmegaConf
 from torch.utils.data import DataLoader, Dataset
 from tqdm.auto import tqdm
 
-from omegaconf import OmegaConf
-
-from kimodo.model import DEFAULT_MODEL, load_model
 from kimodo.constraints import load_constraints_lst
 from kimodo.meta import parse_prompts_from_meta
+from kimodo.model import DEFAULT_MODEL, load_model
 from kimodo.model.load_model import (
     DEFAULT_TEXT_ENCODER_URL,
     _select_text_encoder_conf,

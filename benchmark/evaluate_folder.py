@@ -17,8 +17,8 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
-from kimodo.meta import parse_prompts_from_meta
 from kimodo.constraints import load_constraints_lst
+from kimodo.meta import parse_prompts_from_meta
 from kimodo.metrics import (
     ConstraintFollow,
     FootContactConsistency,

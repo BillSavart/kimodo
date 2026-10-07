@@ -384,7 +384,9 @@ def compute_tmr_retrieval_metrics(
         if n_samples >= 2:
             mu_gt_motion, cov_gt_motion = calculate_activation_statistics(gt_motion_emb)
             output["TMR/FID/gen_gt"] = float(calculate_frechet_distance(mu_gen, cov_gen, mu_gt_motion, cov_gt_motion))
-            output["TMR/FID/gt_text"] = float(calculate_frechet_distance(mu_gt_motion, cov_gt_motion, mu_text, cov_text))
+            output["TMR/FID/gt_text"] = float(
+                calculate_frechet_distance(mu_gt_motion, cov_gt_motion, mu_text, cov_text)
+            )
         else:
             output["TMR/FID/gen_gt"] = float("nan")
             output["TMR/FID/gt_text"] = float("nan")
@@ -524,7 +526,7 @@ def calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
     # Product might be almost singular
     covmean, _ = linalg.sqrtm(sigma1.dot(sigma2), disp=False)
     if not np.isfinite(covmean).all():
-        msg = ("fid calculation produces singular product; " "adding %s to diagonal of cov estimates") % eps
+        msg = ("fid calculation produces singular product; adding %s to diagonal of cov estimates") % eps
         print(msg)
         offset = np.eye(sigma1.shape[0]) * eps
         covmean = linalg.sqrtm((sigma1 + offset).dot(sigma2 + offset))
