@@ -98,9 +98,10 @@ Results are reported for two models:
 
 ## Updated Models (2026-10)
 
-Two updated Rigplay models follow the exact same training splits as Kimodo-SOMA-RP-v1.1 (not trained
-on the SEED test splits), and are additionally trained with full-body keyframe conditioning on
-joint **positions only** (matching the benchmark's full-body constraint cases):
+Two updated Rigplay models are trained on **corrected training splits**: in Kimodo-SOMA-RP-v1.1, some
+BONES-SEED test sequences had leaked into the training set, so the v1.1 rows above are not fully
+comparable to models trained on the recommended splits. The models below remove the leaked sequences —
+use them as the reference point when comparing against the benchmark:
 
 - **Kimodo-SOMA-RP-v1.2**: same smooth-root motion representation as v1.1.
 - **Kimodo-SOMA-RP-ArdyRep-v1.2**: predicts the Ardy motion representation (global root / global
