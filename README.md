@@ -23,6 +23,7 @@ This repository provides:
 
 See the [full changelog](CHANGELOG.md) for a detailed list of all changes.
 
+- **[2026-10-15]** Updated the benchmark to support using the [ARDY](https://research.nvidia.com/labs/sil/projects/ardy/) motion rep, and released SOMA-RP-v1.2 models with fixes for benchmark compatibility.
 - **[2026-07-10]** Released the [ARDY project](https://research.nvidia.com/labs/sil/projects/ardy/) -- a _real-time_ motion generation model with all the controllability of Kimodo!
 - **[2026-05-03]** _FIX_: fixed a bug causing incorrect calculation of averaged metrics for constraint test cases in the benchmark
 - **[2026-04-24]** _NEW_: improved multi-prompt generation and better support for small VRAM GPUs via `TEXT_ENCODER_DEVICE=cpu` env var
@@ -39,8 +40,8 @@ Several variations of Kimodo are available trained on various skeletons and data
 
 | Model | Skeleton | Training Data | Release Date | Hugging Face | License |
 |:-------|:-------------|:------:|:------:|:-------------:|:-------------:|
-| **Kimodo-SOMA-RP-v1.2** | [SOMA](https://github.com/NVlabs/SOMA-X) | [Bones Rigplay 1](https://bones.studio/datasets#rp01) | October 2026 | [Link](https://huggingface.co/nvidia/Kimodo-SOMA-RP-v1.2) | [NVIDIA Open Model](https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-open-model-license/) |
-| **Kimodo-SOMA-RP-ArdyRep-v1.2** | [SOMA](https://github.com/NVlabs/SOMA-X) | [Bones Rigplay 1](https://bones.studio/datasets#rp01) | October 2026 | [Link](https://huggingface.co/nvidia/Kimodo-SOMA-RP-ArdyRep-v1.2) | [NVIDIA Open Model](https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-open-model-license/) |
+| **Kimodo-SOMA-RP-v1.2** | [SOMA](https://github.com/NVlabs/SOMA-X) | [Bones Rigplay 1](https://bones.studio/datasets#rp01) | October 15, 2026 | [Link](https://huggingface.co/nvidia/Kimodo-SOMA-RP-v1.2) | [NVIDIA Open Model](https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-open-model-license/) |
+| **Kimodo-SOMA-RP-ArdyRep-v1.2** | [SOMA](https://github.com/NVlabs/SOMA-X) | [Bones Rigplay 1](https://bones.studio/datasets#rp01) | October 15, 2026 | [Link](https://huggingface.co/nvidia/Kimodo-SOMA-RP-ArdyRep-v1.2) | [NVIDIA Open Model](https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-open-model-license/) |
 | **Kimodo-SOMA-RP-v1.1** | [SOMA](https://github.com/NVlabs/SOMA-X) | [Bones Rigplay 1](https://bones.studio/datasets#rp01) | April 10, 2026 | [Link](https://huggingface.co/nvidia/Kimodo-SOMA-RP-v1.1) | [NVIDIA Open Model](https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-open-model-license/) |
 | **Kimodo-SOMA-SEED-v1.1** | [SOMA](https://github.com/NVlabs/SOMA-X) | [BONES-SEED](https://huggingface.co/datasets/bones-studio/seed) | April 10, 2026  | [Link](https://huggingface.co/nvidia/Kimodo-SOMA-SEED-v1.1) | [NVIDIA Open Model](https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-open-model-license/) |
 | **Kimodo-SOMA-RP-v1** | [SOMA](https://github.com/NVlabs/SOMA-X) | [Bones Rigplay 1](https://bones.studio/datasets#rp01) | March 16, 2026 | [Link](https://huggingface.co/nvidia/Kimodo-SOMA-RP-v1) | [NVIDIA Open Model](https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-open-model-license/) |
@@ -52,11 +53,9 @@ Several variations of Kimodo are available trained on various skeletons and data
 By default, we recommend using the models trained on the full Bones Rigplay 1 dataset (700 hours of mocap) for your motion generation needs.
 The models trained on BONES-SEED use 288 hours of [publicly available mocap data](https://huggingface.co/datasets/bones-studio/seed) so are less capable, but are useful for comparing to other models trained on BONES-SEED. To easily compare motion generation models to Kimodo, check out our [Motion Generation Benchmark](#kimodo-motion-generation-benchmark).
 
-### Changes in v1.1
-The 2026-10 models are trained on corrected splits (some BONES-SEED test sequences had leaked into
-v1.1's training set, so v1.2 is the model to compare against on the benchmark): **Kimodo-SOMA-RP-v1.2** keeps the smooth-root motion representation, while **Kimodo-SOMA-RP-ArdyRep-v1.2** predicts the Ardy motion representation (global root / global joints, raw hips as the root) for direct interoperability with the [ARDY](https://github.com/nv-tlabs/ardy) models. Benchmark numbers for both are in the [benchmark results](docs/source/benchmark/results.md).
-
-The latest v1.1 Kimodo-SOMA models were released primarily for compatibility with our new [Motion Generation Benchmark](#kimodo-motion-generation-benchmark), but also contain minor quality improvements over v1. For details on these improvements, please see the Hugging Face pages for [Kimodo-SOMA-RP-v1.1](https://huggingface.co/nvidia/Kimodo-SOMA-RP-v1.1#changes-in-v11) and [Kimodo-SOMA-SEED-v1.1](https://huggingface.co/nvidia/Kimodo-SOMA-SEED-v1.1#changes-in-v11).
+### Model Update Log
+* _v1.2_: These models are trained on corrected splits and should be used for benchmarking (some BONES-SEED test sequences had leaked into v1.1's training set). **Kimodo-SOMA-RP-v1.2** keeps the smooth-root motion representation, while **Kimodo-SOMA-RP-ArdyRep-v1.2** uses the motion representation from [ARDY](https://github.com/nv-tlabs/ardy) (raw hips as the root) for direct comparability with ARDY models. Benchmark numbers for both are in the [benchmark results](docs/source/benchmark/results.md).
+* _v1.1_: These Kimodo-SOMA models were released primarily for compatibility with the [Motion Generation Benchmark](#kimodo-motion-generation-benchmark), but also contain minor quality improvements over v1. For details on these improvements, please see the Hugging Face pages for [Kimodo-SOMA-RP-v1.1](https://huggingface.co/nvidia/Kimodo-SOMA-RP-v1.1#changes-in-v11) and [Kimodo-SOMA-SEED-v1.1](https://huggingface.co/nvidia/Kimodo-SOMA-SEED-v1.1#changes-in-v11).
 
 ## Getting Started
 

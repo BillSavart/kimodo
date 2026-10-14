@@ -72,7 +72,7 @@ These results are for the Kimodo model trained on the full (proprietary) Bones R
 Results are reported for two models:
 
 - **Kimodo-SOMA-SEED-v1.1**:  trained on the public [BONES-SEED](https://huggingface.co/datasets/bones-studio/seed) dataset. The results are comparable to any model trained on SEED that uses our recommended splits [described in the introduction](introduction.md#dataset-splits).
-- **Kimodo-SOMA-RP-v1.1**: trained on the full (proprietary) Bones Rigplay dataset which is a superset of BONES-SEED. Though the training split is larger, the model is not trained on the SEED test splits to ensure a fair comparison. **Update (2026-10)**: we have since found that some BONES-SEED test sequences had leaked into v1.1's training set; when comparing against the benchmark, prefer the corrected models in [Updated Models (2026-10)](#updated-models-2026-10).
+- **Kimodo-SOMA-RP-v1.1**: trained on the full (proprietary) Bones Rigplay dataset which is a superset of BONES-SEED. Though the training split is larger, the model is not trained on the SEED test splits to ensure a fair comparison. **Update (2026-10)**: we have since found that some BONES-SEED test sequences had leaked into v1.1's training set; when comparing against the benchmark, prefer the corrected models in [Updated Models (v1.2)](#updated-models-v12).
 
 ### Text-Following Evaluation
 
@@ -96,11 +96,11 @@ Results are reported for two models:
 | **Repetition** Kimodo-SOMA-SEED-v1.1 | 3.187 | 3.852 | - | 4.734 | 9.19 | 3.120 | 3.510 | - | 4.264 | 7.89 |
 | **Repetition** Kimodo-SOMA-RP-v1.1 | 2.804 | 2.983 | - | 4.260 | 7.63 | 2.829 | 2.969 | - | 4.027 | 7.21 |
 
-## Updated Models (2026-10)
+## Updated Models (v1.2)
 
 Two updated Rigplay models are trained on **corrected training splits**: in Kimodo-SOMA-RP-v1.1, some
-BONES-SEED test sequences had leaked into the training set, so the v1.1 rows above are not fully
-comparable to models trained on the recommended splits. The models below remove the leaked sequences —
+BONES-SEED test sequences had leaked into the training set, so the v1.1 RP rows above are not fully
+comparable to models trained on the recommended splits (note that SEED models are not affected). The models below remove the leaked sequences —
 use them as the reference point when comparing against the benchmark:
 
 - **Kimodo-SOMA-RP-v1.2**: same smooth-root motion representation as v1.1.
