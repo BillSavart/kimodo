@@ -47,7 +47,6 @@ Options:
   `kimodo` (default, smooth-root — the released benchmark) or `ardy` (raw-hips root, for models
   predicting the Ardy motion representation such as Kimodo-SOMA-RP-ArdyRep-v1.2 or the ARDY models).
   The seeds are representation-agnostic; the representation only enters at this rehydration step.
-- `--skeleton`: `soma77` (default) or `soma30`.
 - `--output`: write the built suite to a separate folder instead of in place (recommended when
   building both representations from the same metadata).
 - `--overwrite`: rebuild `gt_motion.npz` even if it already exists.

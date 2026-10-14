@@ -42,7 +42,6 @@ FPS = 30
 BENCHMARK_REPO_ID = "nvidia/Kimodo-Motion-Gen-Benchmark"
 
 MOTION_REPS = {"kimodo": KimodoMotionRep, "ardy": ArdyMotionRep}
-SKELETONS = {"soma77": SOMASkeleton77, "soma30": SOMASkeleton30}
 SEED_FILES = ("meta.json", "seed_motion.json", "seed_constraints.json")
 # keys of the rep-agnostic gt_motion.npz written for every rep (same set as the released suite)
 GT_MOTION_KEYS = (
@@ -155,7 +154,6 @@ def constraints_and_motion_from_seed(
     folder: str,
     dataset_folder: str,
     motion_rep_name: str = "kimodo",
-    skeleton_name: str = "soma77",
     output_folder: str | None = None,
     fps=FPS,
 ):
@@ -171,7 +169,9 @@ def constraints_and_motion_from_seed(
             if (folder / name).is_file():
                 shutil.copy2(folder / name, out_folder / name)
 
-    skeleton = SKELETONS[skeleton_name]()
+    # the suite is always baked on the full 77-joint SOMA skeleton (as released); 30-joint model
+    # outputs are upscaled at evaluation time
+    skeleton = SOMASkeleton77()
     motion_rep = MOTION_REPS[motion_rep_name](skeleton, fps)
 
     seed_motion = load_json(folder / "seed_motion.json")
@@ -205,12 +205,6 @@ def main():
         default="kimodo",
         help="Motion representation used to rehydrate GT motions and constraint targets: "
         "'kimodo' (smooth-root, the released benchmark) or 'ardy' (raw hips root).",
-    )
-    parser.add_argument(
-        "--skeleton",
-        choices=sorted(SKELETONS),
-        default="soma77",
-        help="SOMA skeleton of the produced GT motions / constraints (default: soma77, as released).",
     )
     parser.add_argument(
         "--output",
@@ -259,7 +253,6 @@ def main():
         constraints_and_motion_from_seed,
         dataset_folder=args.dataset,
         motion_rep_name=args.motion_rep,
-        skeleton_name=args.skeleton,
     )
     jobs = [(fn, d, str(out_dir(d)) if output is not None else None) for d in to_process]
     with Pool(args.workers) as pool:
@@ -267,7 +260,7 @@ def main():
             tqdm(
                 pool.imap_unordered(_run_job, jobs),
                 total=len(jobs),
-                desc=f"Extracting GT motions ({args.motion_rep}, {args.skeleton})",
+                desc=f"Extracting GT motions ({args.motion_rep})",
             )
         )
 
