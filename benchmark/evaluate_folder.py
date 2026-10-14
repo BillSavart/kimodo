@@ -33,7 +33,7 @@ from kimodo.metrics import (
 )
 from kimodo.skeleton import build_skeleton
 from kimodo.skeleton.definitions import SOMASkeleton30
-from kimodo.tools import load_json, to_torch
+from kimodo.tools import disable_tf32, load_json, to_torch
 
 DEFAULT_FPS = 30.0
 
@@ -273,6 +273,7 @@ def main():
     if not folder.is_dir():
         raise SystemExit(f"Folder does not exist: {folder}")
 
+    disable_tf32()
     device = args.device or ("cuda" if torch.cuda.is_available() else "cpu")
 
     examples = discover_motion_folders(folder)

@@ -26,7 +26,7 @@ from kimodo.model.load_model import (
     get_env_var,
 )
 from kimodo.model.loading import instantiate_from_dict
-from kimodo.tools import load_json, seed_everything
+from kimodo.tools import disable_tf32, load_json, seed_everything
 
 
 def _load_model_from_folder(model_path, device=None, text_encoder_fp32: bool = False):
@@ -230,6 +230,7 @@ def _crop_output(output: dict[str, Any], num_frames: int) -> dict[str, Any]:
 
 
 def main():
+    disable_tf32()
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     print(f"Using device: {device}")
 

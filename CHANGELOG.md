@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 - **Breaking:** renamed the `ContraintFollow` metric to `ConstraintFollow`.
 - `benchmark/generate_eval.py` now warns when evaluating Kimodo-SOMA-RP-v1.1, since its training set overlaps the BONES-SEED test splits.
+- `benchmark/generate_eval.py`, `benchmark/embed_folder.py` and `benchmark/evaluate_folder.py` now disable TF32 and run float32 matmuls in full precision. Environments that enable TF32 (e.g. NGC PyTorch containers, which set `TORCH_ALLOW_TF32_CUBLAS_OVERRIDE=1`) previously gave higher foot-skate values than a standard pip install ([#52](https://github.com/nv-tlabs/kimodo/issues/52)).
 
 ## [2026-05-03]
 
