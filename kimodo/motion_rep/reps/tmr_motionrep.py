@@ -216,7 +216,9 @@ class TMRMotionRep(MotionRepBase):
             foot_contacts,
         ] = einops.unpack(features, self.ps, "batch time *")
 
+        # restore the dropped pelvis row at the root height (the other rows already carry it)
         dummy_root = 0 * local_joints_positions[:, :, [0]]
+        dummy_root[..., 1] = root_positions[..., None, 1]
         posed_joints_from_pos = torch.cat([dummy_root, local_joints_positions], dim=2)
         posed_joints_from_pos[..., 0] += root_positions[..., None, 0]
         posed_joints_from_pos[..., 2] += root_positions[..., None, 2]
