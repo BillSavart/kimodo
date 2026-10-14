@@ -248,7 +248,7 @@ def main():
 
     if Path(args.model).is_dir():
         # A path to a checkpoint folder (not a registered short key/display name): load it
-        # directly, bypassing the model registry (mirrors generate_eval_ardy.py).
+        # directly, bypassing the model registry.
         model = _load_model_from_folder(args.model, device=device, text_encoder_fp32=args.text_encoder_fp32)
         resolved_name = Path(args.model).resolve().name
     else:
@@ -259,17 +259,20 @@ def main():
             return_resolved_name=True,
             text_encoder_fp32=args.text_encoder_fp32,
         )
-    # v1.1 models are meant to be used for benchmark evaluation
+    # Models that should not be used for benchmark comparisons
     _deprecated_for_benchmark = {
-        "kimodo-soma-rp-v1": "Kimodo-SOMA-RP-v1 was not trained to be compatible with the benchmark evaluation.",
-        "kimodo-soma-seed-v1": "Kimodo-SOMA-SEED-v1 is not the latest model for benchmark evaluation.",
+        "kimodo-soma-rp-v1": "Kimodo-SOMA-RP-v1 was not trained to be compatible with the benchmark evaluation. "
+        "Consider using Kimodo-SOMA-RP-v1.2.",
+        "kimodo-soma-rp-v1.1": "Kimodo-SOMA-RP-v1.1 was trained on splits where some BONES-SEED test sequences "
+        "leaked into the training set. Consider using Kimodo-SOMA-RP-v1.2.",
+        "kimodo-soma-seed-v1": "Kimodo-SOMA-SEED-v1 is not the latest model for benchmark evaluation. "
+        "Consider using Kimodo-SOMA-SEED-v1.1.",
     }
     if resolved_name in _deprecated_for_benchmark:
         import warnings
 
         warnings.warn(
-            f"Model '{args.model}' resolved to {resolved_name}: "
-            f"{_deprecated_for_benchmark[resolved_name]} Consider using v1.1.",
+            f"Model '{args.model}' resolved to {resolved_name}: {_deprecated_for_benchmark[resolved_name]}",
             stacklevel=1,
         )
     print(f"Generating with model: {resolved_name}")
