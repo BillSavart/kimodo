@@ -129,10 +129,10 @@ smooth-root rows target the smoothed root, where Ground Truth itself scores ~3.6
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | **Content** Ground Truth | 88.66 | 0.000 | 1.849 | 1.000 | 86.37 | 0.000 | 1.789 | 1.000 | 88.21 | 0.000 | 1.711 | 1.000 |
 | **Content** Kimodo-SOMA-RP-v1.2 | 79.83 | 0.037 | 3.331 | 0.982 | 72.19 | 0.034 | 3.191 | 0.983 | 81.75 | 0.037 | 2.965 | 0.984 |
-| **Content** Kimodo-SOMA-RP-ArdyRep-v1.2 | 82.12 | 0.033 | 3.625 | 0.980 | 73.06 | 0.035 | 3.404 | 0.984 | 83.78 | 0.034 | 3.172 | 0.983 |
+| **Content** Kimodo-SOMA-RP-ArdyRep-v1.2 | 80.70 | 0.034 | 3.580 | 0.980 | 72.96 | 0.033 | 3.387 | 0.983 | 82.51 | 0.034 | 3.133 | 0.984 |
 | **Repetition** Ground Truth | 93.95 | 0.000 | 2.106 | 1.000 | 89.96 | 0.000 | 2.037 | 1.000 | 94.44 | 0.000 | 1.931 | 1.000 |
 | **Repetition** Kimodo-SOMA-RP-v1.2 | 85.97 | 0.010 | 3.945 | 0.975 | 74.33 | 0.013 | 3.696 | 0.978 | 86.96 | 0.012 | 3.517 | 0.978 |
-| **Repetition** Kimodo-SOMA-RP-ArdyRep-v1.2 | 85.76 | 0.009 | 4.145 | 0.973 | 74.96 | 0.011 | 3.869 | 0.977 | 87.69 | 0.012 | 3.680 | 0.976 |
+| **Repetition** Kimodo-SOMA-RP-ArdyRep-v1.2 | 85.97 | 0.009 | 4.148 | 0.973 | 74.54 | 0.012 | 3.908 | 0.978 | 87.41 | 0.011 | 3.670 | 0.977 |
 
 ### Constrained Evaluation
 
@@ -140,7 +140,7 @@ smooth-root rows target the smoothed root, where Ground Truth itself scores ~3.6
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | **Content** Ground Truth (smooth root) | 0.000 | 0.000 | - | 3.837 | 5.36 | 0.000 | 0.000 | - | 3.912 | 5.41 |
 | **Content** Kimodo-SOMA-RP-v1.2 | 2.967 | 3.216 | - | 4.658 | 7.76 | 2.987 | 3.154 | - | 4.500 | 7.55 |
-| **Content** Kimodo-SOMA-RP-ArdyRep-v1.2 (raw-hips root, GT 0) | 3.081 | 3.429 | - | 2.901 | 6.56 | 3.077 | 3.354 | - | 2.639 | 5.98 |
+| **Content** Kimodo-SOMA-RP-ArdyRep-v1.2 (raw-hips root, GT 0) | 3.063 | 3.434 | - | 2.904 | 6.79 | 3.101 | 3.383 | - | 2.637 | 5.93 |
 | **Repetition** Ground Truth (smooth root) | 0.000 | 0.000 | - | 3.607 | 5.44 | 0.000 | 0.000 | - | 3.567 | 5.42 |
 | **Repetition** Kimodo-SOMA-RP-v1.2 | 2.953 | 3.264 | - | 4.416 | 8.15 | 2.900 | 3.142 | - | 4.104 | 7.34 |
-| **Repetition** Kimodo-SOMA-RP-ArdyRep-v1.2 (raw-hips root, GT 0) | 3.059 | 3.442 | - | 2.867 | 7.33 | 3.020 | 3.250 | - | 2.428 | 5.49 |
+| **Repetition** Kimodo-SOMA-RP-ArdyRep-v1.2 (raw-hips root, GT 0) | 3.064 | 3.387 | - | 2.835 | 7.08 | 2.984 | 3.289 | - | 2.405 | 5.38 |
