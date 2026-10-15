@@ -110,10 +110,13 @@ use them as the reference point when comparing against the benchmark:
   joints, raw hips as the root — no smooth root). Build its test suite with
   `create_benchmark.py --motion_rep ardy`.
 
-**Protocol note**: unlike the tables above (batch size 1, `bfloat16` text encoder), the rows below
-were generated with batch size 32 and `--text_encoder_fp32`; the Ground Truth rows are re-embedded
-under the same protocol. Numbers are therefore directly comparable within this section, and with
-the tables above up to ~0.5 R@3.
+**Protocol note**: the rows below follow the same protocol as the tables above — batch size 1
+(every test case individually seeded from its `meta.json`), the LLM2Vec text encoder in the default
+`bfloat16` precision, and full-fp32 matrix multiplications (TF32 disabled, which the benchmark
+scripts now enforce). Exact commands: `generate_eval.py --model <model> --batch_size 1`, then
+`embed_folder.py` and `evaluate_folder.py` with default settings. The Ground Truth rows are
+re-embedded on the same machine as the generated motions; across different GPUs / PyTorch builds,
+`bfloat16` embeddings can shift R@3 by up to ~0.5 while Skate and FID are stable.
 
 **Root-metric caveat**: the ArdyRep rows are evaluated on the ardy-rep test suite, where the root
 constraint targets the raw hip trajectory and Ground Truth scores 0 by construction; the
@@ -124,11 +127,11 @@ smooth-root rows target the smoothed root, where Ground Truth itself scores ~3.6
 
 |  | Overview R@3↑ | Overview FID↓ | Overview Skate↓ | Overview Contact↑ | Timeline single R@3↑ | Timeline single FID↓ | Timeline single Skate↓ | Timeline single Contact↑ | Timeline multi R@3↑ | Timeline multi FID↓ | Timeline multi Skate↓ | Timeline multi Contact↑ |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| **Content** Ground Truth | 88.55 | 0.000 | 1.849 | 1.000 | 86.26 | 0.000 | 1.789 | 1.000 | 88.21 | 0.000 | 1.711 | 1.000 |
-| **Content** Kimodo-SOMA-RP-v1.2 | 79.17 | 0.036 | 3.338 | 0.982 | 73.61 | 0.033 | 3.171 | 0.985 | 81.75 | 0.038 | 2.954 | 0.985 |
+| **Content** Ground Truth | 88.66 | 0.000 | 1.849 | 1.000 | 86.37 | 0.000 | 1.789 | 1.000 | 88.21 | 0.000 | 1.711 | 1.000 |
+| **Content** Kimodo-SOMA-RP-v1.2 | 79.83 | 0.037 | 3.331 | 0.982 | 72.19 | 0.034 | 3.191 | 0.983 | 81.75 | 0.037 | 2.965 | 0.984 |
 | **Content** Kimodo-SOMA-RP-ArdyRep-v1.2 | 82.12 | 0.033 | 3.625 | 0.980 | 73.06 | 0.035 | 3.404 | 0.984 | 83.78 | 0.034 | 3.172 | 0.983 |
-| **Repetition** Ground Truth | 93.91 | 0.000 | 2.106 | 1.000 | 89.96 | 0.000 | 2.037 | 1.000 | 94.38 | 0.000 | 1.931 | 1.000 |
-| **Repetition** Kimodo-SOMA-RP-v1.2 | 85.46 | 0.010 | 3.927 | 0.975 | 75.17 | 0.013 | 3.701 | 0.979 | 86.73 | 0.012 | 3.554 | 0.978 |
+| **Repetition** Ground Truth | 93.95 | 0.000 | 2.106 | 1.000 | 89.96 | 0.000 | 2.037 | 1.000 | 94.44 | 0.000 | 1.931 | 1.000 |
+| **Repetition** Kimodo-SOMA-RP-v1.2 | 85.97 | 0.010 | 3.945 | 0.975 | 74.33 | 0.013 | 3.696 | 0.978 | 86.96 | 0.012 | 3.517 | 0.978 |
 | **Repetition** Kimodo-SOMA-RP-ArdyRep-v1.2 | 85.76 | 0.009 | 4.145 | 0.973 | 74.96 | 0.011 | 3.869 | 0.977 | 87.69 | 0.012 | 3.680 | 0.976 |
 
 ### Constrained Evaluation
@@ -136,8 +139,8 @@ smooth-root rows target the smoothed root, where Ground Truth itself scores ~3.6
 |  | With text FB Pos↓ | With text EE Pos↓ | With text EE Rot↓ | With text 2D Root↓ | With text Pelvis@95% | Without text FB Pos↓ | Without text EE Pos↓ | Without text EE Rot↓ | Without text 2D Root↓ | Without text Pelvis@95% |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | **Content** Ground Truth (smooth root) | 0.000 | 0.000 | - | 3.837 | 5.36 | 0.000 | 0.000 | - | 3.912 | 5.41 |
-| **Content** Kimodo-SOMA-RP-v1.2 | 2.934 | 3.196 | - | 4.641 | 7.95 | 2.960 | 3.115 | - | 4.484 | 7.62 |
+| **Content** Kimodo-SOMA-RP-v1.2 | 2.967 | 3.216 | - | 4.658 | 7.76 | 2.987 | 3.154 | - | 4.500 | 7.55 |
 | **Content** Kimodo-SOMA-RP-ArdyRep-v1.2 (raw-hips root, GT 0) | 3.081 | 3.429 | - | 2.901 | 6.56 | 3.077 | 3.354 | - | 2.639 | 5.98 |
 | **Repetition** Ground Truth (smooth root) | 0.000 | 0.000 | - | 3.607 | 5.44 | 0.000 | 0.000 | - | 3.567 | 5.42 |
-| **Repetition** Kimodo-SOMA-RP-v1.2 | 2.949 | 3.216 | - | 4.442 | 8.22 | 2.914 | 3.169 | - | 4.096 | 7.41 |
+| **Repetition** Kimodo-SOMA-RP-v1.2 | 2.953 | 3.264 | - | 4.416 | 8.15 | 2.900 | 3.142 | - | 4.104 | 7.34 |
 | **Repetition** Kimodo-SOMA-RP-ArdyRep-v1.2 (raw-hips root, GT 0) | 3.059 | 3.442 | - | 2.867 | 7.33 | 3.020 | 3.250 | - | 2.428 | 5.49 |
