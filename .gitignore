@@ -158,3 +158,9 @@ onelogger.err
 
 # deploy files
 /helm-library
+
+# Locally downloaded model weights and credentials
+/models/
+/.local/
+.env.*
+!.env.example

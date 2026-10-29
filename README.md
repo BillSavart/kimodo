@@ -5,6 +5,8 @@
   <a href="https://research.nvidia.com/labs/sil/projects/kimodo/docs/index.html"><img src="https://img.shields.io/badge/docs-online-green.svg" alt="Documentation"></a>
 </p>
 
+本 fork 的本機功能與開發進度見 [PROGRESS.md](PROGRESS.md)：SOMA 生成結果的 VRoid 即時預覽、播放同步及 Editing Mode 整合。使用方式見 [VRM_PREVIEW.md](VRM_PREVIEW.md)。
+
 ## Overview
 
 Kimodo is a **ki**nematic **mo**tion **d**iffusi**o**n model trained on a large-scale (700 hours) commercially-friendly optical motion capture dataset. The model generates high-quality 3D human and robot motions, and is controlled through text prompts and an extensive set of constraints such as full-body pose keyframes, end-effector positions/rotations, 2D paths, and 2D waypoints. Full details of the model architecture and training are available in the [technical report](https://research.nvidia.com/labs/sil/projects/kimodo/assets/kimodo_tech_report.pdf).
