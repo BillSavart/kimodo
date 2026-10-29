@@ -50,6 +50,7 @@ from .config import (
 from .embedding_cache import CachedTextEncoder
 from .queue_manager import QueueManager, UserQueue
 from .state import ClientSession, ModelBundle
+from . import vrm_preview
 
 
 class Demo:
@@ -340,6 +341,7 @@ class Demo:
         )
 
         self.client_sessions[client.client_id] = session
+        vrm_preview.install(client)
 
         # Initialize default character for this client
         self.add_character_motion(client, session.skeleton)
@@ -467,6 +469,7 @@ class Demo:
         new_motion = CharacterMotion(new_character, joints_pos, joints_rot, foot_contacts)
         # save the motion in our dict
         session.motions[character_name] = new_motion
+        vrm_preview.publish(session, new_motion)
 
         # put the character at the right frame
         new_motion.set_frame(session.frame_idx)
@@ -490,6 +493,7 @@ class Demo:
         for motion in list(session.motions.values()):
             motion.clear()
         session.motions.clear()
+        vrm_preview.send(session.client, action='clear')
 
     def compute_model_constraints_lst(
         self,
@@ -590,6 +594,7 @@ class Demo:
             session.client.timeline.set_current_frame(frame_idx)
         for motion in list(session.motions.values()):
             motion.set_frame(frame_idx)
+        vrm_preview.send(session.client, action='frame', frame=frame_idx)
         self._apply_constraint_overlay_visibility(session)
 
     def run(self) -> None:
@@ -606,6 +611,13 @@ class Demo:
             # update each client session independently
             #   copy to a list first to avoid changing size if client disconnects
             for client_id, session in list(self.client_sessions.items()):
+                preview_active = session.vrm_preview_enabled and vrm_preview.supported(session) and not session.edit_mode
+                if preview_active != session.vrm_preview_active:
+                    session.vrm_preview_active = preview_active
+                    vrm_preview.send(session.client, action='visible', enabled=preview_active)
+                    if preview_active:
+                        for motion in session.motions.values():
+                            vrm_preview.publish(session, motion)
                 update_interval = int(playback_fps / (session.playback_speed * session.model_fps))
                 new_frame_idx = session.frame_idx
                 if session.playing and update_counter % update_interval == 0:

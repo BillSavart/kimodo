@@ -364,6 +364,17 @@ def create_gui(
                 initial_value=False,
                 visible="soma" in (model_name or ""),
             )
+            gui_vrm_preview = client.gui.add_checkbox(
+                "VRoid Preview", initial_value=True,
+                hint="Preview SOMA motions on AvatarSample_M. Editing mode uses the original constraint view.",
+                visible="soma" in (model_name or ""),
+            )
+
+            @gui_vrm_preview.on_update
+            def _update_vrm_preview(event):
+                active_session = get_active_session(event.client)
+                if active_session is not None:
+                    active_session.vrm_preview_enabled = gui_vrm_preview.value
 
             with client.gui.add_folder("Model Parameters", expand_by_default=False):
                 gui_seed = client.gui.add_number("Seed", initial_value=42)
@@ -1810,6 +1821,7 @@ def create_gui(
                 return
             _update_motion_export_dropdown(loaded_model_name)
             gui_use_soma_layer_checkbox.visible = "soma" in loaded_model_name
+            gui_vrm_preview.visible = "soma" in loaded_model_name
             _is_g1 = "g1" in loaded_model_name
             gui_real_robot_rotations_checkbox.visible = _is_g1
             gui_postprocess_checkbox.visible = not _is_g1
